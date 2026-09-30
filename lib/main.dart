@@ -4,10 +4,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🌟 1. MICROPHONE PERMISSION INITIALIZER (Prompt OS on App Start)
+  try {
+    await Permission.microphone.request();
+  } catch (e) {
+    debugPrint("Permission request notice: $e");
+  }
+
   runApp(const MeAndMyWordsApp());
 }
 
@@ -23,7 +32,7 @@ class MeAndMyWordsApp extends StatelessWidget {
       title: 'Me & My Words',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF9500)),
         useMaterial3: true,
       ),
       home: const WebViewScreen(),
@@ -51,12 +60,17 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   final String targetUrl = "https://script.google.com/macros/s/AKfycbwBY1IWHhGXnjh7c0SKZV8RMWW8enZg79DOTJ9r0sEhimcVLZ-Otg_u48wGntP189Cv/exec";
 
+  // 🌟 GPU ACCELERATION & ZERO-LAG HIGH PERFORMANCE SETTINGS
   final InAppWebViewSettings settings = InAppWebViewSettings(
     javaScriptEnabled: true,
     domStorageEnabled: true,
     databaseEnabled: true,
-    useOnDownloadStart: true,
+    cacheEnabled: true,
+    thirdPartyCookiesEnabled: true,
+    sharedCookiesEnabled: true,
     mediaPlaybackRequiresUserGesture: false,
+    javaScriptCanOpenWindowsAutomatically: true,
+    supportMultipleWindows: true,
     allowFileAccessFromFileURLs: true,
     allowUniversalAccessFromFileURLs: true,
     isInspectable: true,
@@ -65,6 +79,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
     displayZoomControls: false,
     useWideViewPort: true,
     loadWithOverviewMode: true,
+    useHybridComposition: true,
+    hardwareAcceleration: true,
   );
 
   @override
@@ -92,6 +108,17 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 onWebViewCreated: (controller) {
                   webViewController = controller;
                 },
+                // 🌟 MICROPHONE HARDWARE GRANT (Bypasses WebView Mic Block)
+                onPermissionRequest: (controller, request) async {
+                  return PermissionResponse(
+                    resources: request.resources,
+                    action: PermissionResponseAction.GRANT,
+                  );
+                },
+                onCreateWindow: (controller, createWindowAction) async {
+                  // Allows voice escape micro-window to operate seamlessly
+                  return true;
+                },
                 onLoadStart: (controller, url) {
                   setState(() {
                     isLoading = true;
@@ -102,10 +129,55 @@ class _WebViewScreenState extends State<WebViewScreen> {
                     progress = currentProgress / 100;
                   });
                 },
-                onLoadStop: (controller, url) {
+                onLoadStop: (controller, url) async {
                   setState(() {
                     isLoading = false;
                   });
+
+                  // 🌟 100% PERSISTENT AUTO-LOGIN ENGINE
+                  // Checks and preserves writer session on app close/restart
+                  await controller.evaluateJavascript(source: """
+                    (function() {
+                      try {
+                        // 1. Capture credentials on login form submit
+                        var form = document.querySelector('form');
+                        if (form && !form._autoLoginBound) {
+                          form._autoLoginBound = true;
+                          form.addEventListener('submit', function() {
+                            var u = (document.querySelector('input[name="username"]') || {}).value || '';
+                            var p = (document.querySelector('input[name="passcode"]') || {}).value || '';
+                            var c = (document.querySelector('input[name="penCode"]') || {}).value || '';
+                            if (u && p && c) {
+                              localStorage.setItem('__MMW_APK_SESSION_AUTH__', JSON.stringify({ u: u, p: p, c: c }));
+                            }
+                          });
+                        }
+
+                        // 2. If app reopened and on login screen: Auto-Login in 1 tap!
+                        var savedAuth = localStorage.getItem('__MMW_APK_SESSION_AUTH__');
+                        if (savedAuth && form) {
+                          var data = JSON.parse(savedAuth);
+                          var uInput = document.querySelector('input[name="username"]');
+                          var pInput = document.querySelector('input[name="passcode"]');
+                          var cInput = document.querySelector('input[name="penCode"]');
+                          if (uInput && pInput && cInput && data.u && data.p && data.c) {
+                            uInput.value = data.u;
+                            pInput.value = data.p;
+                            cInput.value = data.c;
+                            form.submit();
+                          }
+                        }
+
+                        // 3. Clear session storage strictly on explicit user logout
+                        var logoutBtns = document.querySelectorAll('#stripLogoutBtn, #confirmLogoutBtn, .logout-btn');
+                        logoutBtns.forEach(function(b) {
+                          b.addEventListener('click', function() {
+                            localStorage.removeItem('__MMW_APK_SESSION_AUTH__');
+                          });
+                        });
+                      } catch(e) {}
+                    })();
+                  """);
                 },
                 onReceivedError: (controller, request, error) {
                   setState(() {
@@ -131,7 +203,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   child: LinearProgressIndicator(
                     value: progress,
                     backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF9500)),
                   ),
                 ),
             ],
