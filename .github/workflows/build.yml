@@ -1,0 +1,45 @@
+# =====================================================================
+# ===>> BLOCK YAML 1: GitHub Actions APK Build Automation <<===
+# =====================================================================
+
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter Engine
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: me-and-my-words-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+# =====================================================================
+# ===>> END OF BLOCK YAML 1 file : .github/workflows/build.yml <<===
+# =====================================================================
