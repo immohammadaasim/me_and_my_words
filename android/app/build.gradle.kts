@@ -1,5 +1,5 @@
 // =====================================================================
-// ===>> BLOCK GRADLE 1: Android Application Build Configuration (Kotlin DSL) <<===
+// ===>> BLOCK GRADLE 3: Android App Level Release & SDK Lock <<===
 // =====================================================================
 
 plugins {
@@ -10,18 +10,22 @@ plugins {
 
 android {
     namespace = "com.example.me_and_my_words"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        jvmToolchain(17)
     }
 
     defaultConfig {
         applicationId = "com.example.me_and_my_words"
         minSdk = 21
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -40,5 +44,5 @@ flutter {
 }
 
 // =====================================================================
-// ===>> END OF BLOCK GRADLE 1 file : android/app/build.gradle.kts <<===
+// ===>> END OF BLOCK GRADLE 3 file : android/app/build.gradle.kts <<===
 // =====================================================================
