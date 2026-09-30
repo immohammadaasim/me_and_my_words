@@ -1,6 +1,9 @@
 // =====================================================================
-// ===>> BLOCK GRADLE 2: Android Root Subproject Master Force Hook <<===
+// ===>> BLOCK GRADLE 3: Android Root Build Engine (Zero-Conflict Plugin Hook) <<===
 // =====================================================================
+
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
 
 allprojects {
     repositories {
@@ -15,21 +18,23 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
 
-subprojects {
-    project.evaluationDependsOn(":app")
-}
+    plugins.withId("com.android.application") {
+        extensions.configure<ApplicationExtension> {
+            compileSdk = 34
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+        }
+    }
 
-subprojects {
-    afterEvaluate {
-        if (plugins.hasPlugin("com.android.application") || plugins.hasPlugin("com.android.library")) {
-            configure<com.android.build.gradle.BaseExtension> {
-                compileSdkVersion(34)
-                compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
-                }
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryExtension> {
+            compileSdk = 34
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
             }
         }
     }
@@ -40,5 +45,5 @@ tasks.register<Delete>("clean") {
 }
 
 // =====================================================================
-// ===>> END OF BLOCK GRADLE 2 file : android/build.gradle.kts <<===
+// ===>> END OF BLOCK GRADLE 3 file : android/build.gradle.kts <<===
 // =====================================================================
